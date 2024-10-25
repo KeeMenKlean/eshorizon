@@ -6,3 +6,6 @@
 # already existing elements were commented out
 
 #/target
+/.idea/eshorizon.iml
+/.idea/modules.xml
+/.idea/vcs.xml

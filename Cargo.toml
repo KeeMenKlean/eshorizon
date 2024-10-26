@@ -15,3 +15,6 @@ chrono = { version = "0.4", features = ["default","serde"] }
 lazy_static = "1.4"
 tokio = { version = "1", features = ["full"] }
 async-trait = "0.1.83"
+anyhow = "1.0"
+thiserror = "1.0"
+crossbeam-channel = "0.5"

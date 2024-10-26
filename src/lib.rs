@@ -7,6 +7,18 @@ mod event;
 mod command_main;
 mod command_check;
 mod commandhandler;
+mod compare;
+mod context;
+mod eventbus;
+mod eventhandler;
+mod eventmaintenance;
+mod eventsource;
+mod eventstore;
+mod matcher;
+mod middleware;
+mod outbox;
+mod repo;
+mod snapshot;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right

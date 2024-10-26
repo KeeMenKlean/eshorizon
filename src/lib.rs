@@ -1,5 +1,12 @@
 mod uuid;
-mod codec;
+mod codec_main;
+mod aggregatestore;
+mod aggregate;
+mod entity;
+mod event;
+mod command_main;
+mod command_check;
+mod commandhandler;
 
 pub fn add(left: usize, right: usize) -> usize {
     left + right

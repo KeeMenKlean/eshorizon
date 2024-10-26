@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use mongodb::bson::{self, doc, Bson};
+use mongodb::bson::{self, Bson};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
@@ -14,9 +14,9 @@ pub struct Event {
     pub aggregate_type: String,
     pub aggregate_id: Uuid,
     pub version: i32,
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub metadata: HashMap<String, Bson>,
-    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    #[serde(default, skip_serializing_if = "HashMap::is_empty")]
     pub context: HashMap<String, Bson>,
 }
 
@@ -60,30 +60,119 @@ impl Event {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::Utc;
+    use uuid::Uuid;
 
-// fn main() -> Result<(), Box<dyn std::error::Error>> {
-//     let aggregate_id = Uuid::new_v4();
-//     let timestamp = Utc::now();
-//
-//     // Create an example event
-//     let event = Event::new(
-//         "ExampleEvent".to_string(),
-//         None, // No data for simplicity
-//         timestamp,
-//         "ExampleAggregate".to_string(),
-//         aggregate_id,
-//         1,
-//         HashMap::new(), // Empty metadata for simplicity
-//         HashMap::new(), // Empty context for simplicity
-//     );
-//
-//     // Marshal the event to BSON
-//     let serialized_event = EventCodec::marshal_event(&event)?;
-//     println!("Serialized Event: {:?}", serialized_event);
-//
-//     // Unmarshal the event back to an Event struct
-//     let deserialized_event = EventCodec::unmarshal_event(&serialized_event)?;
-//     println!("Deserialized Event: {:?}", deserialized_event);
-//
-//     Ok(())
-// }
+    #[test]
+    fn test_marshal_event() {
+        let event = Event::new(
+            "TestEvent".to_string(),
+            Some(Bson::String("TestData".to_string())),
+            Utc::now(),
+            "TestAggregate".to_string(),
+            Uuid::new_v4(),
+            1,
+            HashMap::new(), // Empty metadata
+            HashMap::new(), // Empty context
+        );
+
+        // Marshal the event into BSON
+        let serialized_event = EventCodec::marshal_event(&event).unwrap();
+        assert!(!serialized_event.is_empty(), "Serialized event should not be empty");
+    }
+
+    #[test]
+    fn test_unmarshal_event() {
+        let event = Event::new(
+            "TestEvent".to_string(),
+            Some(Bson::String("TestData".to_string())),
+            Utc::now(),
+            "TestAggregate".to_string(),
+            Uuid::new_v4(),
+            1,
+            HashMap::new(), // Empty metadata
+            HashMap::new(), // Empty context
+        );
+
+        // Marshal the event into BSON
+        let serialized_event = EventCodec::marshal_event(&event).unwrap();
+
+        // Unmarshal the BSON data back into an Event struct
+        let deserialized_event = EventCodec::unmarshal_event(&serialized_event).unwrap();
+
+        // Ensure the deserialized event matches the original event
+        assert_eq!(deserialized_event.event_type, event.event_type);
+        assert_eq!(deserialized_event.aggregate_type, event.aggregate_type);
+        assert_eq!(deserialized_event.aggregate_id, event.aggregate_id);
+        assert_eq!(deserialized_event.version, event.version);
+        assert_eq!(deserialized_event.data, event.data);
+    }
+
+    #[test]
+    fn test_marshal_unmarshal_event_with_metadata_context() {
+        // Create sample metadata and context
+        let mut metadata = HashMap::new();
+        metadata.insert("meta_key".to_string(), Bson::String("meta_value".to_string()));
+
+        let mut context = HashMap::new();
+        context.insert("ctx_key".to_string(), Bson::String("context_value".to_string()));
+
+        let event = Event::new(
+            "TestEvent".to_string(),
+            Some(Bson::String("TestData".to_string())),
+            Utc::now(),
+            "TestAggregate".to_string(),
+            Uuid::new_v4(),
+            1,
+            metadata.clone(),
+            context.clone(),
+        );
+
+        // Marshal the event into BSON
+        let serialized_event = EventCodec::marshal_event(&event).unwrap();
+
+        // Unmarshal the BSON data back into an Event struct
+        let deserialized_event = EventCodec::unmarshal_event(&serialized_event).unwrap();
+
+        // Ensure the deserialized event matches the original event
+        assert_eq!(deserialized_event.event_type, event.event_type);
+        assert_eq!(deserialized_event.aggregate_type, event.aggregate_type);
+        assert_eq!(deserialized_event.aggregate_id, event.aggregate_id);
+        assert_eq!(deserialized_event.version, event.version);
+        assert_eq!(deserialized_event.data, event.data);
+
+        // Check that metadata and context are correctly deserialized
+        assert_eq!(deserialized_event.metadata, event.metadata);
+        assert_eq!(deserialized_event.context, event.context);
+    }
+
+    #[test]
+    fn test_event_without_data() {
+        let event = Event::new(
+            "NoDataEvent".to_string(),
+            None, // No data
+            Utc::now(),
+            "TestAggregate".to_string(),
+            Uuid::new_v4(),
+            1,
+            HashMap::new(), // Empty metadata
+            HashMap::new(), // Empty context
+        );
+
+        // Marshal the event into BSON
+        let serialized_event = EventCodec::marshal_event(&event).unwrap();
+
+        // Unmarshal the BSON data back into an Event struct
+        let deserialized_event = EventCodec::unmarshal_event(&serialized_event).unwrap();
+
+        // Ensure the deserialized event matches the original event
+        assert_eq!(deserialized_event.event_type, event.event_type);
+        assert_eq!(deserialized_event.aggregate_type, event.aggregate_type);
+        assert_eq!(deserialized_event.aggregate_id, event.aggregate_id);
+        assert_eq!(deserialized_event.version, event.version);
+        assert!(deserialized_event.data.is_none());
+    }
+}

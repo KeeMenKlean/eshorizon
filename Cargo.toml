@@ -12,3 +12,6 @@ serde_json = "1.0.116"
 erased-serde = "0.4.4"
 serde_with = "3.11.0"
 chrono = { version = "0.4", features = ["default","serde"] }
+lazy_static = "1.4"
+tokio = { version = "1", features = ["full"] }
+async-trait = "0.1.83"
